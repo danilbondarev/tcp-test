@@ -20,17 +20,19 @@ function onClientConnection(sock) {
     //Listen for data from the connected client.
     sock.on('data', function (data) {
         //Log data from client
-        const response = data.toString().trim().split('\n');
+        const response = data.toString().split('\n');
 
         // Output Data
-        for (let i = 0; i < response.length; i++) {
-            console.log(mathCalc(response[i]) + '\n');
-        }
+        const clientResponse = response.map(function(name) {
+            return mathCalc(name);
+        }).join('\n');
+
+        sock.write(clientResponse);
 
         // Destroy socket
-        setTimeout(() => {
-            sock.destroy();
-        }, 0);
+        process.nextTick(function () {
+            sock.destroy()
+        });
     });
 
     //Handle client connection termination.
@@ -40,13 +42,12 @@ function onClientConnection(sock) {
 
     //Handle Client connection error.
     sock.on('error', function (error) {
-        console.error(`${sock.remoteAddress}:${sock.remotePort} Connection Error : ${error}`);
+        console.error(`${sock.remoteAddress}:${sock.remotePort} Connection error : ${error}`);
     });
 }
 
 function mathCalc(expression) {
     if (isValidMathExpression(expression)) {
-        expression = expression.trim();
         let result;
         let numOr0 = n => isNaN(n) ? 0 : Number(n);
 
@@ -63,13 +64,14 @@ function mathCalc(expression) {
         if (/\+/.test(expression)) {
             const numbersString = expression.split('+');
             result = numbersString.reduce((accumulator, b) => numOr0(accumulator) + numOr0(b));
+            result = Math.floor(result);
         }
 
         if (/\//.test(expression)) {
             const numbersString = expression.split('/');
             numbersString.reduce(function (accumulator, current) {
                 if (numOr0(accumulator) === 0 || numOr0(current) === 0) {
-                    result = 'Error: division by zero';
+                    result = 'error: division by zero';
                 } else {
                     result = Math.floor(numOr0(accumulator) / numOr0(current));
                 }
@@ -82,7 +84,7 @@ function mathCalc(expression) {
         }
         return Number.isInteger(result) ? ToUInt32(result) : result;
     } else {
-        return 'Error: incorrect syntax';
+        return 'error: incorrect syntax';
     }
 }
 
