@@ -20,13 +20,14 @@ function onClientConnection(sock) {
     //Listen for data from the connected client.
     sock.on('data', function (data) {
         //Log data from client
-        const response = data.toString().split('\n');
+        const response = data.toString().split('\n').filter(function(e){return e}); ;
 
         // Output Data
         const clientResponse = response.map(function(name) {
             return mathCalc(name);
         }).join('\n');
 
+        // Send data to client
         sock.write(clientResponse);
 
         // Destroy socket
@@ -56,15 +57,14 @@ function mathCalc(expression) {
             result = numbersString.reduce((accumulator, current) => numOr0(accumulator) * numOr0(current));
         }
 
-        if (/\-/.test(expression)) {
+        if (/-/.test(expression)) {
             const numbersString = expression.split('-');
             result = numbersString.reduce((accumulator, current) => numOr0(accumulator) - numOr0(current));
         }
 
         if (/\+/.test(expression)) {
             const numbersString = expression.split('+');
-            result = numbersString.reduce((accumulator, b) => numOr0(accumulator) + numOr0(b));
-            result = Math.floor(result);
+            result = Math.floor(numbersString.reduce((accumulator, b) => numOr0(accumulator) + numOr0(b)));
         }
 
         if (/\//.test(expression)) {
@@ -78,9 +78,15 @@ function mathCalc(expression) {
             });
         }
 
-        if (/\%/.test(expression)) {
+        if (/%/.test(expression)) {
             const numbersString = expression.split('%');
-            result = numbersString.reduce((accumulator, current) => numOr0(accumulator) % numOr0(current));
+            numbersString.reduce(function (accumulator, current) {
+                if (numOr0(accumulator) === 0 || numOr0(current) === 0) {
+                    result = 'error: division by zero';
+                } else {
+                    result = Math.floor(numOr0(accumulator) % numOr0(current));
+                }
+            });
         }
         return Number.isInteger(result) ? ToUInt32(result) : result;
     } else {
@@ -88,11 +94,15 @@ function mathCalc(expression) {
     }
 }
 
+// Validate math expression
 function isValidMathExpression(exp) {
+    if(/\s/g.test(exp)){
+        return false;
+    }
+
     if (exp !== '') {
         try {
-            // or /[\%\-\/\+\*]/.test(exp)
-            const result = eval(exp);
+            const result = /^[\d][%\/*+-][\d]+$/.test(exp);
             return true;
         } catch (e) {
             return false;

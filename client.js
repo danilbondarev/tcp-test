@@ -6,14 +6,16 @@ client.connect(8080, '127.0.0.1', function() {
 
     //client.write('1+2\n3');
     //client.write('+3\n2+4\n5/0\n');
-    client.write('5/2\n');
-    client.write('101/10\n');
-    client.write('0-1\n');
-    client.write('0!1\n');
-    client.write('5%2\n');
-    client.write('0.1+0.2\n');
-    client.write('4294967295 + 1\n');
-    client.write('hello world\n');
+    client.write('5/2\n' +
+        '101/10\n' +
+        '0-1\n' +
+        '0!1\n' +
+        '5%2\n' +
+        '10%0\n' +
+        '0.7+0.2\n' +
+        '12/3\n' +
+        '4294967295 + 1\n' +
+        'hello world\n');
 
 });
 
